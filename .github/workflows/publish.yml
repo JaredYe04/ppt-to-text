@@ -61,22 +61,27 @@ jobs:
       - name: Bump version (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
         run: |
-          # 获取本地 package.json 版本
+          # 获取本地 package.json 版本（从 GitHub 拉取后的版本）
           LOCAL_VERSION=$(node -p "require('./package.json').version")
-          echo "📦 Local package.json version: $LOCAL_VERSION"
+          echo "📦 Local package.json version (after sync): $LOCAL_VERSION"
           
           # 获取 npm 上的最新版本
+          echo "🔍 Checking npm registry for latest version..."
           NPM_VERSION=$(npm view ppt-to-text version 2>/dev/null || echo "")
+          
           if [ -z "$NPM_VERSION" ]; then
             echo "📦 No existing version on npm, starting fresh"
             BASE_VERSION=$LOCAL_VERSION
           else
             echo "📦 Latest npm version: $NPM_VERSION"
-            # 使用 npm 的 semver 比较功能（通过 node）
-            # 如果本地版本小于等于 npm 版本，使用 npm 版本作为基准
+            echo "🔍 Comparing versions: local=$LOCAL_VERSION vs npm=$NPM_VERSION"
+            
+            # 使用更可靠的版本比较
             COMPARE=$(node -e "
               const local = '$LOCAL_VERSION'.split('.').map(Number);
               const npm = '$NPM_VERSION'.split('.').map(Number);
+              console.log('Local:', local.join('.'));
+              console.log('NPM:', npm.join('.'));
               for (let i = 0; i < 3; i++) {
                 if (local[i] > npm[i]) {
                   console.log('local');
@@ -89,11 +94,14 @@ jobs:
               console.log('equal');
             ")
             
+            echo "🔍 Comparison result: $COMPARE"
+            
             if [ "$COMPARE" = "npm" ] || [ "$COMPARE" = "equal" ]; then
               echo "⚠️  npm version ($NPM_VERSION) is newer or equal to local ($LOCAL_VERSION)"
               echo "📝 Updating local package.json to match npm version..."
               npm version $NPM_VERSION --no-git-tag-version --allow-same-version
               BASE_VERSION=$NPM_VERSION
+              echo "✅ Updated to: $BASE_VERSION"
             else
               echo "✅ Local version ($LOCAL_VERSION) is newer than npm ($NPM_VERSION)"
               BASE_VERSION=$LOCAL_VERSION
@@ -101,8 +109,17 @@ jobs:
           fi
           
           echo "📦 Starting from version: $BASE_VERSION"
+          echo "📝 Verifying current package.json version..."
+          CURRENT=$(node -p "require('./package.json').version")
+          echo "📦 Current package.json version: $CURRENT"
+          
+          if [ "$CURRENT" != "$BASE_VERSION" ]; then
+            echo "⚠️  Version mismatch! Updating to $BASE_VERSION..."
+            npm version $BASE_VERSION --no-git-tag-version --allow-same-version
+          fi
           
           # 递增版本
+          echo "🆕 Incrementing version (${{ github.event.inputs.version }})..."
           npm version ${{ github.event.inputs.version }} --no-git-tag-version
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "🆕 New version after increment: $NEW_VERSION"

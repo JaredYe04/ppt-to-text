@@ -347,7 +347,27 @@ function main() {
         console.log(`\n请将 PPT 文件放入以下目录:`);
         console.log(`  ${TEST_FILES_DIR}`);
         console.log(`\n支持的格式: ${SUPPORTED_EXTENSIONS.join(', ')}`);
-        process.exit(0);
+        
+        // 在 CI 环境中，即使没有测试文件，也运行基本的 API 测试
+        const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+        if (isCI) {
+            console.log('\n🔍 CI 环境检测：运行基本 API 测试...\n');
+            try {
+                // 运行基本的 API 存在性检查
+                const apiTest = testCases.find(tc => tc.name === 'API 存在性检查');
+                if (apiTest) {
+                    apiTest.test(null); // API 测试不需要文件
+                    console.log('✅ 基本 API 测试通过\n');
+                }
+                console.log('ℹ️  跳过文件测试（无测试文件）\n');
+                process.exit(0);
+            } catch (error) {
+                console.error('❌ 基本 API 测试失败:', error.message);
+                process.exit(1);
+            }
+        } else {
+            process.exit(0);
+        }
     }
     
     console.log(`\n找到 ${testFiles.length} 个测试文件:\n`);
