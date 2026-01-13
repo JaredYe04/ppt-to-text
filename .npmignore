@@ -1,18 +1,34 @@
+# Source files
+bits/
 test_files/
-index.html
-misc/
-node_modules
-tmp
-*.ppt
-*.pptx
-.gitignore
-.jshintrc
-CONTRIBUTING.md
-Makefile
-tests.lst
-.npmignore
-shim.js
+example.js
 test.js
-.jscs.json
-.gitmodules
-.travis.yml
+
+# Documentation
+*.md
+!README.md
+
+# Build files
+Makefile
+dist/
+
+# CI/CD
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/

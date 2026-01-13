@@ -26,6 +26,24 @@ var to_text = function(pres) {
 	else return to_text_s(pres.slides);
 };
 
+var toTextString = function(pres, separator) {
+	separator = separator || "\n";
+	var textArray = to_text(pres);
+	return textArray.join(separator);
+};
+
+var writeTextFile = function(text, outputPath, encoding) {
+	if(typeof require === 'undefined') {
+		throw new Error("writeTextFile requires Node.js fs module");
+	}
+	var fs = require('fs');
+	encoding = encoding || 'utf8';
+	fs.writeFileSync(outputPath, text, encoding);
+	return outputPath;
+};
+
 var utils = {
-	to_text: to_text
+	to_text: to_text,
+	toTextString: toTextString,
+	writeTextFile: writeTextFile
 };

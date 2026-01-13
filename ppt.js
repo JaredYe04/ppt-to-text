@@ -2,7 +2,9 @@
 /* vim: set ts=2: */
 var PPT = {};
 (function make_ppt(PPT) {
+
 PPT.version = '0.0.2';
+
 if(typeof require !== 'undefined') {
 	if(typeof CFB === 'undefined') CFB = require('cf'+'b');
 	if(typeof cptable === 'undefined') cptable = require('code'+'page');
@@ -23,6 +25,7 @@ function recordhopper(blob, cb, end, opts) {
 		cb(R, val, rh.Length);
 	}
 }
+
 
 /* [MS-ODRAW] v20140721 */
 
@@ -167,6 +170,7 @@ function parse_OfficeArtFDG(blob, length, opts) {
 	return { csp: blob.read_shift(4), spidCur: blob.read_shift(4) };
 }
 
+
 /* all references based on [MS-PPT] v20140721 */
 /* [MS-PPT] 2.2 Basic Types */
 
@@ -176,6 +180,7 @@ function parse_CString(blob, length, opts) {
 	blob.l += length;
 	return o;
 }
+
 /* [MS-PPT] 2.3 File Structure Types */
 
 /* [MS-PPT] 2.3.1 RecordHeader */
@@ -223,6 +228,7 @@ function parse_PersistDirectoryAtom(blob, length, opts) {
 	}
 	return dir;
 }
+
 
 /* [MS-PPT] 2.4 Document Types */
 
@@ -320,6 +326,7 @@ function parse_OutlineViewInfoContainer(blob, length, opts) { blob.l += length; 
 /* [MS-PPT] 2.4.21.13 SorterViewInfoContainer */
 function parse_SorterViewInfoContainer(blob, length, opts) { blob.l += length; }
 
+
 /* [MS-PPT] 2.5 Slide Types */
 
 /* [MS-PPT] 2.5.1 SlideContainer */
@@ -410,10 +417,12 @@ function parse_DrawingContainer(blob, length, opts) {
 	return o;
 }
 
+
 /* [MS-PPT] 2.6 Slide Show Types */
 
 /* [MS-PPT] 2.6.1 SlideShowDocInfoAtom */
 function parse_SlideShowDocInfoAtom(blob, length, opts) { blob.l += length; }
+
 
 /* [MS-PPT] 2.7 Shape Types */
 
@@ -422,6 +431,7 @@ function parse_OfficeArtClientAnchor(blob, length, opts) { blob.l += length; }
 
 /* [MS-PPT] 2.7.3 OfficeArtClientData */
 function parse_OfficeArtClientData(blob, length, opts) { blob.l += length; }
+
 
 /* [MS-PPT] 2.9 Basic Types */
 /* [MS-PPT] 2.9.1 DocumentTextInfoContainer */
@@ -525,6 +535,7 @@ function parse_OfficeArtClientTextbox(blob, length, opts) {
 /* [MS-PPT] 2.9.79 MasterTextPropAtom */
 function parse_MasterTextPropAtom(blob, length, opts) { blob.l += length; }
 
+
 /* [MS-PPT] 2.10 External Object Types */
 
 /* [MS-PPT] 2.10.1 ExObjListContainer */
@@ -532,6 +543,7 @@ function parse_ExObjListContainer(blob, length, opts) { blob.l += length; }
 
 /* [MS-PPT] 2.10.3 ExObjListAtom */
 function parse_ExObjListAtom(blob, length, opts) { blob.l += length; }
+
 
 /* [MS-PPT] 2.11 Other Types */
 
@@ -561,6 +573,7 @@ function parse_RoundTripOriginalMainMasterId12Atom(blob, length, opts) { blob.l 
 
 /* [MS-PPT] 2.11.27 RoundTripThemeAtom */
 function parse_RoundTripThemeAtom(blob, length, opts) { blob.l += length; }
+
 
 /* [MS-PPT] 2.13.24 RecordType (other records are noted below) */
 var RecordEnum = {
@@ -823,6 +836,7 @@ var RecordEnum = {
 
 	0xFC1C: { n:"RT_MagicAtom", f:parsenoop }
 };
+
 function parse_SlideViewInfo$(blob, length, opts) { blob.l += length; }
 function parse_ProgTags$(blob, length, opts) { blob.l += length; }
 function parse_HeadersFooters$(blob, length, opts) { blob.l += length; }
@@ -833,11 +847,11 @@ function process_ppt(ppt, opts) {
 	opts = opts || {};
 
 	/* 2.1.1 Current User Stream */
-	var custream = ppt.find('Current User');
+	var custream = CFB.find(ppt, 'Current User');
 	var cublob = custream.content;
 
 	/* 2.1.2 PowerPoint Document Stream */
-	var pptstream = ppt.find('PowerPoint Document');
+	var pptstream = CFB.find(ppt, 'PowerPoint Document');
 	var pptblob = pptstream.content;
 
 	var cu, uea;
@@ -909,6 +923,12 @@ function readFile(filename, opts) {
 	return process_ppt(ppt, opts);
 }
 
+function readBuffer(buffer, opts) {
+	var ppt = CFB.read(buffer, {type:'buffer'});
+	return process_ppt(ppt, opts);
+}
+
+
 var to_text_d = function(docs) {
 	var out = [];
 	docs.forEach(function(d) {
@@ -937,10 +957,69 @@ var to_text = function(pres) {
 	else return to_text_s(pres.slides);
 };
 
-var utils = {
-	to_text: to_text
+var toTextString = function(pres, separator) {
+	separator = separator || "\n";
+	var textArray = to_text(pres);
+	return textArray.join(separator);
 };
+
+var writeTextFile = function(text, outputPath, encoding) {
+	if(typeof require === 'undefined') {
+		throw new Error("writeTextFile requires Node.js fs module");
+	}
+	var fs = require('fs');
+	encoding = encoding || 'utf8';
+	fs.writeFileSync(outputPath, text, encoding);
+	return outputPath;
+};
+
+var utils = {
+	to_text: to_text,
+	toTextString: toTextString,
+	writeTextFile: writeTextFile
+};
+
 PPT.parse_pptcfb = process_ppt;
 PPT.readFile = readFile;
+PPT.readBuffer = readBuffer;
 PPT.utils = utils;
+
+/**
+ * 统一的文本提取API
+ * @param {string|Buffer} input - PPT文件路径或Buffer
+ * @param {object} options - 选项
+ * @param {string} options.outputPath - 输出文件路径（如果提供，则写入文件；否则返回字符串）
+ * @param {string} options.separator - 文本分隔符，默认为 "\n"
+ * @param {string} options.encoding - 文件编码，默认为 'utf8'
+ * @param {object} options.readOpts - 传递给readFile/readBuffer的选项
+ * @returns {string} - 如果提供了outputPath则返回文件路径，否则返回文本字符串
+ */
+PPT.extractText = function(input, options) {
+	options = options || {};
+	var separator = options.separator || "\n";
+	var encoding = options.encoding || 'utf8';
+	var readOpts = options.readOpts || {};
+	
+	var pres;
+	// 判断输入是Buffer还是文件路径
+	if(Buffer.isBuffer(input)) {
+		pres = readBuffer(input, readOpts);
+	} else if(typeof input === 'string') {
+		pres = readFile(input, readOpts);
+	} else {
+		throw new Error("input must be a file path (string) or Buffer");
+	}
+	
+	var text = utils.toTextString(pres, separator);
+	
+	// 如果提供了输出路径，写入文件
+	if(options.outputPath) {
+		return utils.writeTextFile(text, options.outputPath, encoding);
+	}
+	
+	// 否则返回文本字符串
+	return text;
+};
+
 })(typeof exports !== 'undefined' ? exports : PPT);
+

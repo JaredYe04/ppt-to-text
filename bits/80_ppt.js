@@ -8,11 +8,11 @@ function process_ppt(ppt, opts) {
 	opts = opts || {};
 
 	/* 2.1.1 Current User Stream */
-	var custream = ppt.find('Current User');
+	var custream = CFB.find(ppt, 'Current User');
 	var cublob = custream.content;
 
 	/* 2.1.2 PowerPoint Document Stream */
-	var pptstream = ppt.find('PowerPoint Document');
+	var pptstream = CFB.find(ppt, 'PowerPoint Document');
 	var pptblob = pptstream.content;
 
 	var cu, uea;
@@ -81,6 +81,11 @@ function process_ppt(ppt, opts) {
 
 function readFile(filename, opts) {
 	var ppt = CFB.read(filename, {type:'file'});
+	return process_ppt(ppt, opts);
+}
+
+function readBuffer(buffer, opts) {
+	var ppt = CFB.read(buffer, {type:'buffer'});
 	return process_ppt(ppt, opts);
 }
 
