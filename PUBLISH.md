@@ -4,14 +4,33 @@
 
 ## 准备工作
 
-### 1. 设置 NPM_TOKEN
+### 1. 设置 NPM_TOKEN（重要！）
 
-在 GitHub 仓库的 Settings > Secrets and variables > Actions 中添加 `NPM_TOKEN`：
+**⚠️ 重要提示**：npm 现在要求使用 **Granular Access Token** 并启用 **"Bypass 2FA"** 选项。如果遇到 403 错误，请查看详细的设置指南。
+
+#### 快速设置步骤：
 
 1. 登录 npm: https://www.npmjs.com/
-2. 进入 Account Settings > Access Tokens
-3. 创建新的 Access Token（类型选择 "Automation"）
-4. 在 GitHub 仓库中添加 Secret，名称为 `NPM_TOKEN`，值为刚才创建的 token
+2. 进入 **Access Tokens** 页面
+3. 创建 **Granular Access Token**（不是 Classic Token）
+4. 配置时**必须启用 "Bypass 2FA"** 选项
+5. 在 GitHub 仓库的 Secrets 中添加 `NPM_TOKEN`
+
+#### 详细设置指南：
+
+请查看 [NPM_TOKEN_SETUP.md](NPM_TOKEN_SETUP.md) 获取完整的步骤说明和常见问题解答。
+
+#### 常见错误：
+
+**错误 403 - Two-factor authentication required**:
+- ✅ 确保使用 **Granular Access Token**（不是 Classic Token）
+- ✅ 确保启用了 **"Bypass 2FA"** 选项
+- ✅ 确保 Token 类型是 **"Automation"**
+
+**错误 403 - Forbidden**:
+- 检查 Token 是否有正确的权限（Read and write）
+- 检查包名是否已存在且你有权限发布
+- 确保 Token 未过期
 
 ### 2. 确保 package.json 配置正确
 

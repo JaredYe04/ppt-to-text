@@ -17,7 +17,7 @@
 		"mocha":"",
 		"uglify-js":""
 	},
-	"repository": { "type":"git", "url":"git://github.com/SheetJS/js-ppt.git" },
+	"repository": { "type":"git", "url":"git://github.com/JaredYe04/ppt-to-text.git" },
 	"scripts": {
 		"build": "node scripts/build.js",
 		"build:dist": "node scripts/build.js --dist",
