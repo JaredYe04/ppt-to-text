@@ -52,16 +52,62 @@ jobs:
       - name: Bump version (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
         run: |
+          # 获取当前版本
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # 递增版本
           npm version ${{ github.event.inputs.version }} --no-git-tag-version
-          VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+          
+          # 检查 npm 上是否已存在该版本
+          if npm view ppt-to-text@$NEW_VERSION version > /dev/null 2>&1; then
+            echo "⚠️  Version $NEW_VERSION already exists on npm"
+            echo "Attempting to increment again..."
+            # 再次递增版本
+            npm version ${{ github.event.inputs.version }} --no-git-tag-version
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "Updated version: $NEW_VERSION"
+            
+            # 再次检查
+            if npm view ppt-to-text@$NEW_VERSION version > /dev/null 2>&1; then
+              echo "❌ Error: Version $NEW_VERSION also exists on npm. Please manually update package.json version."
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Version $NEW_VERSION is available for publishing"
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Bump version (release)
         if: github.event_name == 'release'
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Release version: $VERSION"
+          
+          # 检查 npm 上是否已存在该版本
+          if npm view ppt-to-text@$VERSION version > /dev/null 2>&1; then
+            echo "⚠️  Warning: Version $VERSION already exists on npm"
+            echo "Using --allow-same-version to update package.json"
+          fi
+          
           npm version $VERSION --no-git-tag-version --allow-same-version
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Verify version before publish
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "📦 Preparing to publish version: $VERSION"
+          
+          # 最终检查：确保版本不存在
+          if npm view ppt-to-text@$VERSION version > /dev/null 2>&1; then
+            echo "❌ Error: Version $VERSION already exists on npm registry"
+            echo "Cannot publish duplicate version. Please update package.json with a new version."
+            exit 1
+          fi
+          
+          echo "✅ Version $VERSION is ready to publish"
 
       - name: Build
         run: npm run build
