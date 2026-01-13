@@ -30,14 +30,14 @@
 2. 选择 **"Publish to npm"** 工作流
 3. 点击 **"Run workflow"**
 4. 选择版本类型：
-   - `patch`: 0.0.2 → 0.0.3
+   - `patch`: 0.0.2 → 0.1.0
    - `minor`: 0.0.2 → 0.1.0
    - `major`: 0.0.2 → 1.0.0
 5. 点击 **"Run workflow"**
 
 #### 方式2: 通过 GitHub Release
 1. 创建新的 GitHub Release
-2. 填写版本号（例如：v0.0.3）
+2. 填写版本号（例如：v0.1.0）
 3. 发布 Release
 
 ### 执行步骤（按顺序）

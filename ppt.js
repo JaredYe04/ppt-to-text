@@ -3,7 +3,7 @@
 var PPT = {};
 (function make_ppt(PPT) {
 
-PPT.version = '0.0.2';
+PPT.version = '0.1.0';
 
 if(typeof require !== 'undefined') {
 	if(typeof CFB === 'undefined') CFB = require('cf'+'b');

@@ -1,6 +1,6 @@
 {
 	"name": "ppt-to-text",
-	"version": "0.0.3",
+	"version": "0.1.0",
 	"author": "sheetjs",
 	"description": "Pure JS PowerPoint 97-2003 (PPT) Parser - Extract text from PPT files",
 	"keywords": [
