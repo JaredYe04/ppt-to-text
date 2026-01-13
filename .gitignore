@@ -3,8 +3,13 @@ misc/coverage.html
 misc/prof.js
 v8.log
 tmp
-# Ignore PPT files except in test_files directory
-*.ppt
-*.pptx
-!test_files/*.ppt
-!test_files/*.pptx
+# 测试输出目录（不提交到git）
+test_files/output
+# 测试文件目录（用户自己管理，不强制提交所有文件）
+# 只保留示例文件 layout_types_2011.ppt 和 layout_types_2011.pptx
+test_files/*.ppt
+test_files/*.pptx
+!test_files/layout_types_2011.ppt
+!test_files/layout_types_2011.pptx
+!test_files/README.md
+!test_files/LICENSE
