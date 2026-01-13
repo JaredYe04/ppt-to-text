@@ -40,6 +40,15 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+      - name: Sync with remote (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          # 确保获取最新的远程更改
+          echo "🔄 Fetching latest changes from remote..."
+          git fetch origin main
+          git checkout main
+          git pull origin main --rebase || git pull origin main
 
       - name: Install dependencies
         run: |
@@ -164,11 +173,55 @@ jobs:
       - name: Create Git tag and push (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
         run: |
+          # 添加版本变更
           git add package.json package-lock.json
-          git commit -m "chore: bump version to ${{ env.VERSION }}" || exit 0
-          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
-          git push origin HEAD:main
-          git push origin "v${{ env.VERSION }}"
+          
+          # 检查是否有变更需要提交
+          if git diff --staged --quiet; then
+            echo "⚠️  No changes to commit (version may already be updated)"
+          else
+            git commit -m "chore: bump version to ${{ env.VERSION }}"
+          fi
+          
+          # 在 push 之前先 pull，使用 rebase 避免合并提交
+          echo "🔄 Pulling latest changes from remote..."
+          git fetch origin main
+          git pull origin main --rebase || {
+            echo "⚠️  Rebase failed, trying merge..."
+            git pull origin main --no-edit || {
+              echo "❌ Failed to sync with remote. This may happen if:"
+              echo "   1. Remote has conflicting changes"
+              echo "   2. Version was already updated in another commit"
+              echo "💡 Solution: Check remote repository and resolve conflicts manually"
+              exit 1
+            }
+          }
+          
+          # 创建 tag（如果不存在）
+          if git rev-parse "v${{ env.VERSION }}" >/dev/null 2>&1; then
+            echo "⚠️  Tag v${{ env.VERSION }} already exists locally, skipping tag creation"
+          else
+            git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
+          fi
+          
+          # Push 代码
+          echo "📤 Pushing changes to remote..."
+          git push origin HEAD:main || {
+            echo "❌ Failed to push to main branch"
+            echo "💡 This may happen if remote has new commits. Try running the workflow again."
+            exit 1
+          }
+          
+          # Push tag（检查远程是否已存在）
+          if git ls-remote --tags origin | grep -q "refs/tags/v${{ env.VERSION }}$"; then
+            echo "ℹ️  Tag v${{ env.VERSION }} already exists on remote, skipping tag push"
+          else
+            git push origin "v${{ env.VERSION }}" || {
+              echo "⚠️  Failed to push tag, but code was pushed successfully"
+            }
+          fi
+          
+          echo "✅ Successfully pushed version ${{ env.VERSION }}"
 
       - name: Create GitHub Release (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
