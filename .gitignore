@@ -3,5 +3,8 @@ misc/coverage.html
 misc/prof.js
 v8.log
 tmp
+# Ignore PPT files except in test_files directory
 *.ppt
 *.pptx
+!test_files/*.ppt
+!test_files/*.pptx
